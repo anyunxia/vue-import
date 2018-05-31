@@ -1,0 +1,186 @@
+一.配置scss
+------------------------------------------------------------------------------------------
+	1安装sass的依赖包
+	npm install --save-dev sass-loader
+	npm install --save-dev node-sass
+	2、在build文件夹下的webpack.base.conf.js的rules里面添加配置
+	{
+	  test: /\.sass$/,
+	  loaders: ['style', 'css', 'sass']
+	}
+	3、在APP.vue中修改style标签
+	<style lang="scss">
+	4、然后运行项目
+	 npm run dev
+-------------------------------------------------------------------------------------------------- 
+二. axios请求数据
+----------------------------------------------------------------------------------------------------------
+	 1、打开命令行，进入vue-cli项目中，输入：cnpm install axios --save，回车进行axios安装。
+	2、在需要跨域请求数据的文件引入axios，如下：
+		 import axios from 'axios';
+		 在data里面定义一个list：[]空数组用于存放请求到的数据
+		 在mounted里发送请求，例如：
+		 mounted:function(){
+				axios.post("api/api/getLikeList?pageNub=1&pageSize=20")
+				.then((res)=>{
+	//			    console.log(res)
+					this.list=res.data.likeProductInfo;
+					console.log(this.list)
+				})
+				.catch((error)=>{
+					console.log(error)
+				})
+			}
+	3,同时发送多个请求
+		   function getUserAccount() {
+	  return axios.get('/user/12345');
+	}
+
+	function getUserPermissions() {
+	  return axios.get('/user/12345/permissions');
+	}
+
+	axios.all([getUserAccount(), getUserPermissions()])
+	  .then(axios.spread(function (acct, perms) {
+		// Both requests are now complete 
+	  }));
+	  4.发送并发请求
+	axios.all([axios.get('/profile'), axios.post('/user')])
+	.then(axios.spread((res1, res2)=>{
+	console.log(res1)
+	console.log(res2)
+	}))
+	设置反向代理
+	在项目的config文件夹index.js文件下进行如下设置即可：
+		proxyTable: {
+			'/api':{
+				target:'https://m.ymatou.com/home',
+				changeOrigin: true,
+				pathRewrite: {   '^/api':''//这里理解成用‘/api’代替target里面的地址，后面组件中我们掉接口时直接用api代理，比如我要调用'http://40.00.100.100:3002/user/add'，直接写‘/api/user/add’即可
+				}
+			}
+		},
+	渲染数据：
+	<li v-for="item in list">
+					<img :src="item.pic" alt="" />
+					<p>{{item.name}}</p>
+					<div class="bottom">
+						<div class="price">
+							<span>￥ </span>
+							{{item.price}}
+						</div>
+						<div class="place">{{item.sellerInfo.countryName}}</div>
+					</div>
+					
+				</li>
+-------------------------------------------------------------------------------------------------------------------
+三：公共组件的写法：
+	在src/components目录创建目录 common, 再创建header.vue
+	header.vue的片段代码为
+	<template>
+		<div>
+			<h1>header in here</h1>
+		</div>
+	</template>
+	<script>
+		export default{}
+	</script>
+
+	(1)全局挂载组件
+	在main.js里挂载,通过Vue.component方式
+	import headerTop from "xxx/components/common/header"   //引入组件
+	Vue.component("head-view",headerTop);
+	 //第一个参数表示 head-view标签的内容都用第二个参数headerTop来代替
+	然后在需要使用的vue文件中引入头部的话,只需要加入 <head-view></head-view>标签
+
+	(2)局部引入,需要用的时候才引入使用
+	在需要使用的VUE文件中引入头部:
+	代码片段
+	<template>
+	<headerTopNav></headerTopNav>
+	</template>
+	<script>
+	 import headerTopNav from 'xxx/components/common/header'  //引入组件
+	export default{
+	components: {headerTopNav} //表示headerTopNav标签的内容被headerTopNav组件代替
+	}
+	</script>
+-------------------------------------------------------------------------------------------------------------------
+四.swiper轮播图的用法：
+     在项目中执行命令 cnpm i vue-awesome-swiper --save
+     在main.js中引入
+		require('swiper/dist/css/swiper.css')
+		import VueAwesomeSwiper from 'vue-awesome-swiper'
+		Vue.use(VueAwesomeSwiper)
+	在要轮播的组件中加入
+	<template>
+		<div class="banner">
+			   <swiper :options="swiperOption" class="swiper-slide">
+						<swiper-slide v-for="slide in images" :key="slide.id">
+							<img :src="slide.imgs">
+						</swiper-slide>
+						<div class="swiper-pagination" slot="pagination"></div>
+				</swiper>
+		   </div>
+     </template>
+     <script>
+     </script>
+     注意问题：Vue如何在data中正常引入图片路径
+      在Vue项目中通过data设置图片路径，然后在template中引入后页面无法显示图片，浏览器控制台报错：
+      这是因为在Vue里动态生成的路径无法被url-loader解析到，此时有两种解决方法：
+        方法一.直接将你的图片源文件放在项目目录的static文件夹里，然后和正常写图片路径那样写就可以了：
+                例：
+                <script>
+					export default{
+						name:'Home',
+						data(){
+							return{
+								swiperOption: {　　　　　
+									 autoplay:false,//不自动切换
+									 loop : true,//一直循环，解决视觉体验
+									 pagination: {
+									 el: '.swiper-pagination'//分页器
+									 }
+								},
+							images:[
+								     {imgs:'../../static/images/ban1.jpg'},
+									 {imgs:'../../static/images/ban2.jpg'},
+									 {imgs:'../../static/images/ban3.jpg'},
+									 {imgs:'../../static/images/ban4.jpg'},
+									 {imgs:'../../static/images/ban5.jpg'}
+								 	]
+								}
+						}
+					}
+					</script>
+         方法二.通过import的方法将图片源路径引入，如下图所示：
+               例：
+                <script>
+					import Img1 from './../assets/images/ban1.jpg'
+					import Img2 from './../assets/images/ban2.jpg'
+					import Img3 from './../assets/images/ban3.jpg'
+					import Img4 from './../assets/images/ban4.jpg'
+					import Img5 from './../assets/images/ban5.jpg'
+					export default{
+						name:'Home',
+						data(){
+							return{
+								swiperOption: {　　　　　
+									 autoplay:false,//不自动切换
+									 loop : true,//一直循环，解决视觉体验
+									 pagination: {
+									 el: '.swiper-pagination'//分页器
+									 }
+								},
+							images:[
+								  {imgs:img1},
+								  {imgs:img2},
+								  {imgs:img3},
+								  {imgs:img4},
+								  {imgs:img5}
+								 	]
+								}
+						}
+					}
+					</script>
+	最后一步：设置图片的宽度和高度
